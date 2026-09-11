@@ -13,6 +13,12 @@ enum KeyboardLayout {
     struct Stroke: Equatable {
         let code: UInt32
         let shift: Bool
+
+        /// The modifiers for RegisterEventHotKey: ⌃⌥⌘, plus ⇧ if the
+        /// character needs it on this layout.
+        var carbonModifiers: UInt32 {
+            UInt32(controlKey | optionKey | cmdKey) | (shift ? UInt32(shiftKey) : 0)
+        }
     }
 
     /// Highest key code that a keyboard layout describes.

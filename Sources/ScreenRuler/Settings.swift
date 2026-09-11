@@ -7,7 +7,6 @@ enum Settings {
         static let slitHeight = "slitHeight"
         static let dimOpacity = "dimOpacity"
         static let feather = "feather"
-        static let slitShortcut = "slitShortcut"
         static let tintHex = "tintHex"
     }
 
@@ -22,7 +21,6 @@ enum Settings {
             Key.slitHeight: 64.0,
             Key.dimOpacity: 0.6,
             Key.feather: 16.0,
-            Key.slitShortcut: SlitShortcut.commaPeriod.rawValue,
             Key.tintHex: "",                 // empty: plain black
         ])
     }
@@ -68,15 +66,6 @@ enum Settings {
     /// The colour of the dark part, ready to draw.
     static var dimColor: NSColor {
         OverlayTint.dimColor(tint: tintColor, opacity: dimOpacity)
-    }
-
-    /// The key pair that changes the slit height.
-    static var slitShortcut: SlitShortcut {
-        get {
-            let raw = UserDefaults.standard.string(forKey: Key.slitShortcut) ?? ""
-            return SlitShortcut(rawValue: raw) ?? .commaPeriod
-        }
-        set { UserDefaults.standard.set(newValue.rawValue, forKey: Key.slitShortcut) }
     }
 
     private static func clamp(_ value: Double, to range: ClosedRange<Double>) -> Double {

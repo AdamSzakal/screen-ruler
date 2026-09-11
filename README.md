@@ -86,25 +86,13 @@ The slit itself stays fully clear at all times.
 
 ### Height shortcut
 
-Some pairs are already in use by other tools — Rectangle, for example, uses
-`⌃⌥⌘` with the arrow keys. The **Height Shortcut** submenu therefore gives four
-pairs:
+The height keys are written as **characters**, not as key positions. The app
+asks the keyboard layout which key makes "," and ".", therefore the shortcut
+sits on the correct keys on a Swedish keyboard and on a US keyboard. A change
+of the layout registers the keys again.
 
-| Pair | Note |
-| --- | --- |
-| `⌃⌥⌘ ,` and `⌃⌥⌘ .` | Default. |
-| `⌃⌥⌘ −` and `⌃⌥⌘ +` | `⌃⌥⌘ =` works too. |
-| `⌃⌥⌘ J` and `⌃⌥⌘ K` | |
-| `⌃⌥⌘ ↓` and `⌃⌥⌘ ↑` | Rectangle and other window tools often use this pair. |
-
-A pair is written as **characters**, not as key positions. The app asks the
-keyboard layout which key makes the character, therefore `⌃⌥⌘+` is the "+" key
-on a Swedish keyboard and `⇧=` on a US keyboard. A pair that your layout cannot
-make with `⇧` only is grey in the menu. A change of the layout registers the
-keys again.
-
-The height keys exist only while the ruler is on. While it is off, the key
-combinations go back to the other apps.
+The height keys exist only while the ruler is on. While it is off, `⌃⌥⌘,` and
+`⌃⌥⌘.` go back to the other apps.
 
 ## No permissions
 
@@ -141,7 +129,6 @@ permission**:
 | `Sources/ScreenRuler/RulerView.swift` | The two dark layers and the slit. |
 | `Sources/ScreenRuler/SliderMenuItemView.swift` | A slider row in the menu. |
 | `Sources/ScreenRuler/GlobalHotKey.swift` | The shortcuts (Carbon API). |
-| `Sources/ScreenRuler/SlitShortcut.swift` | The four key pairs for the height. |
 | `Sources/ScreenRuler/OverlayTint.swift` | The colours for the dark part. |
 | `Sources/ScreenRuler/KeyboardLayout.swift` | Character to key, for your layout. |
 | `Sources/ScreenRuler/Settings.swift` | Values in UserDefaults. |

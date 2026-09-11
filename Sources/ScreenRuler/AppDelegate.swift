@@ -12,8 +12,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var sliders: [Slider: SliderMenuItemView] = [:]
     private var toggleKey: GlobalHotKey?
     private var heightKeys: [GlobalHotKey] = []
-    private var hintItem: NSMenuItem!
-    private var shortcutMenu: NSMenu!
     private var tintItem: NSMenuItem!
     private var tintMenu: NSMenu!
     private var watchesColourPanel = false
@@ -23,7 +21,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private static let shortcutModifiers: NSEvent.ModifierFlags = [.control, .option, .command]
     private static let carbonModifiers = UInt32(controlKey | optionKey | cmdKey)
 
-    /// Change of the slit height for one press of an arrow key.
+    /// The characters that change the slit height, with ⌃⌥⌘.
+    private static let heightCharacters: [(character: String, step: Double)] = [
+        (".", slitStep), (",", -slitStep),
+    ]
+
+    /// Change of the slit height for one press of a height key.
     private static let slitStep = 10.0
     /// Wait before a held arrow key starts to repeat, like the system does.
     private static let repeatDelay = 0.3
@@ -117,21 +120,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         menu.addItem(.separator())
         menu.addItem(caption("⌃⌥⌘R   switch the ruler on or off"))
-        hintItem = caption("")
-        menu.addItem(hintItem)
-
-        let shortcutItem = NSMenuItem(title: "Height Shortcut", action: nil, keyEquivalent: "")
-        shortcutMenu = NSMenu()
-        shortcutMenu.autoenablesItems = false
-        for choice in SlitShortcut.allCases {
-            let item = NSMenuItem(title: choice.title, action: #selector(selectShortcut(_:)), keyEquivalent: "")
-            item.target = self
-            item.representedObject = choice.rawValue
-            item.toolTip = choice.warning
-            shortcutMenu.addItem(item)
-        }
-        shortcutItem.submenu = shortcutMenu
-        menu.addItem(shortcutItem)
+        menu.addItem(caption("⌃⌥⌘,  ⌃⌥⌘.   change the slit height"))
         menu.addItem(.separator())
 
         loginItem = NSMenuItem(title: "Open at Login", action: #selector(toggleOpenAtLogin), keyEquivalent: "")
@@ -192,18 +181,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             ? "On — \(screens) screen\(screens == 1 ? "" : "s") dimmed"
             : "Off").attributedTitle
         toggleItem.title = overlay.isActive ? "Switch Ruler Off" : "Switch Ruler On"
-        let choice = Settings.slitShortcut
-        let hint = choice.keys == nil
-            ? "\(choice.hint)   not on this keyboard layout"
-            : "\(choice.hint)   change the slit height"
-        hintItem.attributedTitle = caption(hint).attributedTitle
-
-        for item in shortcutMenu.items {
-            guard let raw = item.representedObject as? String, let pair = SlitShortcut(rawValue: raw) else { continue }
-            item.state = pair == choice ? .on : .off
-            item.isEnabled = pair.keys != nil
-            item.toolTip = pair.keys == nil ? "This keyboard layout cannot make these characters." : pair.warning
-        }
         loginItem.state = isOpenAtLogin ? .on : .off
 
         overlay.setLowered(true)
@@ -246,11 +223,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         heightKeys.removeAll()          // this also unregisters the old keys
         guard active else { return }
 
-        guard let pair = Settings.slitShortcut.keys else { return }
-        let keys = pair.bigger.map { ($0, Self.slitStep) } + pair.smaller.map { ($0, -Self.slitStep) }
-        for (key, step) in keys {
-            let hotKey = GlobalHotKey(keyCode: key.code,
-                                      modifiers: key.carbonModifiers,
+        for (character, step) in Self.heightCharacters {
+            // The layout says which key makes the character on this keyboard.
+            guard let stroke = KeyboardLayout.stroke(for: character) else { continue }
+            let hotKey = GlobalHotKey(keyCode: stroke.code,
+                                      modifiers: stroke.carbonModifiers,
                                       onPress: { [weak self] in self?.beginAdjust(step: step) },
                                       onRelease: { [weak self] in self?.stopRepeat() })
             if let hotKey { heightKeys.append(hotKey) }
@@ -342,13 +319,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     @objc private func keyboardLayoutChanged() {
-        setHeightKeysActive(overlay.isActive)
-    }
-
-    @objc private func selectShortcut(_ sender: NSMenuItem) {
-        guard let raw = sender.representedObject as? String,
-              let choice = SlitShortcut(rawValue: raw) else { return }
-        Settings.slitShortcut = choice
         setHeightKeysActive(overlay.isActive)
     }
 
