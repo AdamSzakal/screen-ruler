@@ -50,28 +50,33 @@ enum Settings {
         set { UserDefaults.standard.set(clamp(newValue, to: featherRange), forKey: Key.feather) }
     }
 
-    /// The colour over the slit, or nil for a clear slit.
+    /// The colour that is mixed into the dark part, or nil for plain black.
     static var tintColor: NSColor? {
         get {
             let hex = UserDefaults.standard.string(forKey: Key.tintHex) ?? ""
-            return hex.isEmpty ? nil : SlitTint.color(fromHex: hex)
+            return hex.isEmpty ? nil : OverlayTint.color(fromHex: hex)
         }
         set {
-            let hex = newValue.flatMap(SlitTint.hex(from:)) ?? ""
+            let hex = newValue.flatMap(OverlayTint.hex(from:)) ?? ""
             UserDefaults.standard.set(hex, forKey: Key.tintHex)
         }
     }
 
-    /// "RRGGBB" of the colour over the slit, empty for a clear slit.
+    /// "RRGGBB" of the colour of the dark part, empty for plain black.
     static var tintHex: String {
         get { UserDefaults.standard.string(forKey: Key.tintHex) ?? "" }
         set { UserDefaults.standard.set(newValue, forKey: Key.tintHex) }
     }
 
-    /// How strong the colour is over the slit.
+    /// How much of the colour is mixed into the black.
     static var tintStrength: Double {
         get { clamp(UserDefaults.standard.double(forKey: Key.tintStrength), to: tintStrengthRange) }
         set { UserDefaults.standard.set(clamp(newValue, to: tintStrengthRange), forKey: Key.tintStrength) }
+    }
+
+    /// The colour of the dark part, ready to draw.
+    static var dimColor: NSColor {
+        OverlayTint.dimColor(tint: tintColor, strength: tintStrength, opacity: dimOpacity)
     }
 
     /// The key pair that changes the slit height.

@@ -102,10 +102,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         menu.addItem(.separator())
 
-        tintItem = NSMenuItem(title: "Slit Colour", action: nil, keyEquivalent: "")
+        tintItem = NSMenuItem(title: "Dim Colour", action: nil, keyEquivalent: "")
         tintMenu = NSMenu()
-        tintMenu.addItem(tintChoice(name: "No Colour", hex: ""))
-        for preset in SlitTint.presets {
+        tintMenu.addItem(tintChoice(name: "Black", hex: ""))
+        for preset in OverlayTint.presets {
             tintMenu.addItem(tintChoice(name: preset.name, hex: preset.hex))
         }
         tintMenu.addItem(.separator())
@@ -115,7 +115,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         tintItem.submenu = tintMenu
         menu.addItem(tintItem)
 
-        sliders[.tintStrength] = addSlider(title: "Colour strength",
+        sliders[.tintStrength] = addSlider(title: "Colour amount",
                                            range: Settings.tintStrengthRange,
                                            value: Settings.tintStrength,
                                            format: Self.percent,
@@ -269,22 +269,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let item = NSMenuItem(title: name, action: #selector(selectTint(_:)), keyEquivalent: "")
         item.target = self
         item.representedObject = hex
-        item.image = Self.swatch(for: hex.isEmpty ? nil : SlitTint.color(fromHex: hex))
+        // The swatch shows the real colour of the dark part, at full alpha.
+        item.image = Self.swatch(for: Self.swatchColor(forHex: hex))
         return item
+    }
+
+    /// How the dark part looks with this tint, without the alpha.
+    private static func swatchColor(forHex hex: String) -> NSColor {
+        OverlayTint.dimColor(tint: hex.isEmpty ? nil : OverlayTint.color(fromHex: hex),
+                             strength: Settings.tintStrength,
+                             opacity: 1)
     }
 
     private func updateTintMenu() {
         let current = Settings.tintHex
-        tintItem.image = Self.swatch(for: Settings.tintColor)
+        tintItem.image = Self.swatch(for: Self.swatchColor(forHex: current))
         for item in tintMenu.items {
             guard let hex = item.representedObject as? String else { continue }
             item.state = hex.caseInsensitiveCompare(current) == .orderedSame ? .on : .off
+            item.image = Self.swatch(for: Self.swatchColor(forHex: hex))
         }
         // The last row holds the colour of the user, if it is not a preset.
         if let custom = tintMenu.items.last {
-            let isCustom = !current.isEmpty && SlitTint.presetName(forHex: current) == nil
+            let isCustom = !current.isEmpty && OverlayTint.presetName(forHex: current) == nil
             custom.state = isCustom ? .on : .off
-            custom.image = isCustom ? Self.swatch(for: Settings.tintColor) : nil
+            custom.image = isCustom ? Self.swatch(for: Self.swatchColor(forHex: current)) : nil
         }
     }
 
@@ -299,7 +308,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let panel = NSColorPanel.shared
         panel.setTarget(self)
         panel.setAction(#selector(customTintChanged(_:)))
-        panel.color = Settings.tintColor ?? SlitTint.presets[0].color
+        panel.color = Settings.tintColor ?? OverlayTint.presets[0].color
         panel.isContinuous = true        // the slit follows the panel at once
         panel.showsAlpha = false
 
@@ -327,22 +336,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         updateTintMenu()
     }
 
-    /// A small round square of the colour for a menu row. Nil is "no colour".
-    private static func swatch(for color: NSColor?) -> NSImage {
+    /// A small round square of the colour for a menu row.
+    private static func swatch(for color: NSColor) -> NSImage {
         let size = NSSize(width: 14, height: 14)
         return NSImage(size: size, flipped: false) { rect in
             let path = NSBezierPath(roundedRect: rect.insetBy(dx: 0.5, dy: 0.5), xRadius: 3.5, yRadius: 3.5)
-            (color ?? NSColor.textBackgroundColor).setFill()
+            color.setFill()
             path.fill()
-            if color == nil {
-                // A line across the empty swatch.
-                NSColor.tertiaryLabelColor.setStroke()
-                let slash = NSBezierPath()
-                slash.move(to: NSPoint(x: rect.minX + 3, y: rect.minY + 3))
-                slash.line(to: NSPoint(x: rect.maxX - 3, y: rect.maxY - 3))
-                slash.lineWidth = 1.5
-                slash.stroke()
-            }
             NSColor.separatorColor.setStroke()
             path.lineWidth = 1
             path.stroke()
