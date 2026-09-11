@@ -1,92 +1,125 @@
+<div align="center">
+
+<img src="docs/icon.png" width="120" alt="Screen Ruler icon">
+
 # Screen Ruler
 
-A small macOS menu bar app. It makes the screen dark, but keeps a bright
-horizontal slit at the height of the pointer. The slit moves with the pointer,
-like a reading ruler on a page.
+**A reading ruler for your Mac.**
+It makes the screen dark and keeps one bright slit at the height of the pointer.
 
+![macOS 13+](https://img.shields.io/badge/macOS-13%2B-111?style=flat-square)
+![Swift 6](https://img.shields.io/badge/Swift-6-F05138?style=flat-square)
+![Menu bar app](https://img.shields.io/badge/menu%20bar-only-FFC36B?style=flat-square)
+![MIT](https://img.shields.io/badge/license-MIT-111?style=flat-square)
+
+<img src="docs/hero.png" width="860" alt="A dark screen with one bright horizontal slit across a page of text, and the menu of the app">
+
+<sub>Drawing of the effect, not a screen capture.</sub>
+
+</div>
+
+---
+
+Long pages are difficult to read when everything asks for attention at the same
+time. A paper reading ruler solves this: you put a card below the line and the
+rest of the page goes away. Screen Ruler does the same on the screen. The slit
+follows the pointer, therefore your hand keeps the place, and every click still
+goes to the app below.
+
+## Install
+
+```sh
+git clone https://github.com/AdamSzakal/screen-ruler.git
+cd screen-ruler
+./build.sh install        # builds, then copies to /Applications and starts it
+```
+
+`./build.sh` alone puts `ScreenRuler.app` in `build/`. You need the Xcode
+command line tools. The result is a universal binary (Apple silicon and Intel)
+with an ad-hoc signature, thus it runs on your own machine without a developer
+account.
+
+Then open the menu of the app and switch **Open at Login** on.
 
 ## Use
 
-- **Click** the menu bar icon: open the menu with the status, the settings and
-  the shortcuts.
-- **⌃⌥⌘R**: switch the ruler on or off from any app.
-- **⌃⌥⌘. / ⌃⌥⌘,**: make the slit higher or lower from any app. Hold the key
-  down to continue. The slit moves to the new height with a short animation.
-
-Settings:
-
-| Setting | What it does |
+| Action | What happens |
 | --- | --- |
-| Slit height | The height of the bright slit, 12 to 300 px. |
-| Dim amount | How dark the rest of the screen becomes, 10 to 95 %. |
-| Edge softness | The width of the soft edge above and below the slit. |
-| Open at Login | Starts the app when you log in. |
+| Click the menu bar icon | The menu opens: status, settings and shortcuts. |
+| `⌃⌥⌘R` | Switches the ruler on or off, from any app. |
+| `⌃⌥⌘.` | Makes the slit higher. Hold the key to continue. |
+| `⌃⌥⌘,` | Makes the slit lower. |
+
+The slit moves to a new height with a short animation. All settings stay after
+a restart.
+
+| Setting | Range |
+| --- | --- |
+| Slit height | 12 to 300 px |
+| Dim amount | 10 to 95 % |
+| Edge softness | 0 to 80 px, the soft edge above and below the slit |
 
 ### Height shortcut
 
-The menu has a **Height Shortcut** submenu with four key pairs:
+Some pairs are already in use by other tools — Rectangle, for example, uses
+`⌃⌥⌘` with the arrow keys. The **Height Shortcut** submenu therefore gives four
+pairs:
 
 | Pair | Note |
 | --- | --- |
 | `⌃⌥⌘ ,` and `⌃⌥⌘ .` | Default. |
-| `⌃⌥⌘ −` and `⌃⌥⌘ +` | `⌃⌥⌘ =` works too, with or without ⇧. |
-| `⌃⌥⌘ [` and `⌃⌥⌘ ]` | Grey on a layout that needs ⌥ for a bracket, e.g. Swedish. |
+| `⌃⌥⌘ −` and `⌃⌥⌘ +` | `⌃⌥⌘ =` works too. |
 | `⌃⌥⌘ J` and `⌃⌥⌘ K` | |
 | `⌃⌥⌘ ↓` and `⌃⌥⌘ ↑` | Rectangle and other window tools often use this pair. |
 
-Select a different pair if an other app already holds one. The height keys are
-registered only while the ruler is on, thus they stay free for other apps while
-the ruler is off.
-
 A pair is written as **characters**, not as key positions. The app asks the
-keyboard layout which key makes the character, therefore ⌃⌥⌘+ is the "+" key
-on a Swedish keyboard and ⇧= on a US keyboard. If a character needs more than
-⇧ on your layout, that pair is grey in the menu. A change of the layout
-registers the keys again.
+keyboard layout which key makes the character, therefore `⌃⌥⌘+` is the "+" key
+on a Swedish keyboard and `⇧=` on a US keyboard. A pair that your layout cannot
+make with `⇧` only is grey in the menu. A change of the layout registers the
+keys again.
 
-The settings stay after a restart of the app.
+The height keys exist only while the ruler is on. While it is off, the key
+combinations go back to the other apps.
 
-## Build
+## No permissions
 
-```sh
-./build.sh            # makes build/ScreenRuler.app
-./build.sh install    # also copies it to /Applications and starts it
-open build/ScreenRuler.app
-```
+The app asks for **no accessibility permission and no screen recording
+permission**:
 
-You need Xcode command line tools. The build makes a universal binary
-(Apple silicon and Intel) and signs it ad-hoc, so it runs on your own machine
-without a developer account.
+- The pointer position comes from a poll of `NSEvent.mouseLocation`, not from an
+  event tap.
+- The shortcuts use the Carbon hot key API, which also holds the keys back from
+  the app below.
 
 ## How it works
 
-- One transparent, click-through window covers each screen. The window level is
-  above the menu bar, the Dock and full screen apps.
+- One transparent window covers each screen, above the menu bar, the Dock and
+  full screen apps. The windows let all clicks through, thus the app below stays
+  fully usable.
 - Each window holds two dark gradient layers: one above the slit, one below it.
-  A timer reads the pointer position 60 times a second and moves the two layers.
-  Only the size of a layer changes, so the GPU does very little work.
-- The same timer eases the drawn slit height to the height of the setting.
-  Each frame covers a quarter of the distance that is left, thus a change of
-  the height is a short, smooth movement.
-- The windows let all clicks through (`ignoresMouseEvents`), thus the app below
-  the ruler stays fully usable.
-- The app polls the pointer position instead of an event tap, and the shortcuts
-  use the Carbon hot key API. Therefore it needs **no accessibility permission**.
-- If a second screen has no pointer on it, that screen stays fully dark.
+  A timer reads the pointer 60 times a second and changes the size of the two
+  layers. Nothing is drawn again, therefore the work for the GPU is very small.
+- The same timer eases the drawn slit height to the height of the setting. Each
+  frame covers a quarter of the distance that is left, thus a change of the
+  height is a short, smooth movement.
+- While the menu of the app is open, the windows go below the menu level, so
+  that the menu stays easy to read.
+- A screen with no pointer on it stays fully dark.
 
 ## Files
 
 | File | Content |
 | --- | --- |
-| `Sources/ScreenRuler/AppDelegate.swift` | Menu bar item, menu, shortcut. |
-| `Sources/ScreenRuler/OverlayController.swift` | Windows for each screen, pointer tracking. |
+| `Sources/ScreenRuler/AppDelegate.swift` | Menu bar item, menu, shortcuts. |
+| `Sources/ScreenRuler/OverlayController.swift` | Windows for each screen, pointer, animation. |
 | `Sources/ScreenRuler/OverlayWindow.swift` | The click-through window. |
 | `Sources/ScreenRuler/RulerView.swift` | The two dark layers and the slit. |
 | `Sources/ScreenRuler/SliderMenuItemView.swift` | A slider row in the menu. |
 | `Sources/ScreenRuler/GlobalHotKey.swift` | The shortcuts (Carbon API). |
 | `Sources/ScreenRuler/SlitShortcut.swift` | The four key pairs for the height. |
-| `Sources/ScreenRuler/KeyboardLayout.swift` | Character to key, for the layout of the user. |
-| `Sources/ScreenRuler/Settings.swift` | Values kept in UserDefaults. |
+| `Sources/ScreenRuler/KeyboardLayout.swift` | Character to key, for your layout. |
+| `Sources/ScreenRuler/Settings.swift` | Values in UserDefaults. |
+| `Tools/MakeArtwork.swift` | Makes `docs/icon.png` and `docs/hero.png`. |
 
 ## License
 
