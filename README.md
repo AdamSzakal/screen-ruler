@@ -10,7 +10,7 @@ like a reading ruler on a page.
 - **Click** the menu bar icon: open the menu with the status, the settings and
   the shortcuts.
 - **⌃⌥⌘R**: switch the ruler on or off from any app.
-- **⌃⌥⌘↑ / ⌃⌥⌘↓**: make the slit higher or lower from any app. Hold the key
+- **⌃⌥⌘+ / ⌃⌥⌘−**: make the slit higher or lower from any app. Hold the key
   down to continue. The slit moves to the new height with a short animation.
 
 Settings:
@@ -22,8 +22,20 @@ Settings:
 | Edge softness | The width of the soft edge above and below the slit. |
 | Open at Login | Starts the app when you log in. |
 
-The arrow shortcuts work only while the ruler is on. While it is off, the app
-gives ⌃⌥⌘↑ and ⌃⌥⌘↓ back to the system.
+### Height shortcut
+
+The menu has a **Height Shortcut** submenu with four key pairs:
+
+| Pair | Note |
+| --- | --- |
+| `⌃⌥⌘ −` and `⌃⌥⌘ +` | Default. `⌃⌥⌘ =` works too, with or without ⇧. |
+| `⌃⌥⌘ [` and `⌃⌥⌘ ]` | |
+| `⌃⌥⌘ J` and `⌃⌥⌘ K` | |
+| `⌃⌥⌘ ↓` and `⌃⌥⌘ ↑` | Rectangle and other window tools often use this pair. |
+
+Select a different pair if an other app already holds one. The height keys are
+registered only while the ruler is on, thus they stay free for other apps while
+the ruler is off.
 
 The settings stay after a restart of the app.
 
@@ -65,6 +77,7 @@ without a developer account.
 | `Sources/ScreenRuler/RulerView.swift` | The two dark layers and the slit. |
 | `Sources/ScreenRuler/SliderMenuItemView.swift` | A slider row in the menu. |
 | `Sources/ScreenRuler/GlobalHotKey.swift` | The shortcuts (Carbon API). |
+| `Sources/ScreenRuler/SlitShortcut.swift` | The four key pairs for the height. |
 | `Sources/ScreenRuler/Settings.swift` | Values kept in UserDefaults. |
 
 ## License

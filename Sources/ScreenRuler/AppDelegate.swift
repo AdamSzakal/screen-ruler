@@ -11,7 +11,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var loginItem: NSMenuItem!
     private var sliders: [Slider: SliderMenuItemView] = [:]
     private var toggleKey: GlobalHotKey?
-    private var arrowKeys: [GlobalHotKey] = []
+    private var heightKeys: [GlobalHotKey] = []
+    private var hintItem: NSMenuItem!
+    private var shortcutMenu: NSMenu!
     private var repeatTimer: Timer?
 
     /// The modifiers of all shortcuts: ⌃⌥⌘.
@@ -93,7 +95,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         menu.addItem(.separator())
         menu.addItem(caption("⌃⌥⌘R   switch the ruler on or off"))
-        menu.addItem(caption("⌃⌥⌘↑ ⌃⌥⌘↓   change the slit height"))
+        hintItem = caption("")
+        menu.addItem(hintItem)
+
+        let shortcutItem = NSMenuItem(title: "Height Shortcut", action: nil, keyEquivalent: "")
+        shortcutMenu = NSMenu()
+        for choice in SlitShortcut.allCases {
+            let item = NSMenuItem(title: choice.title, action: #selector(selectShortcut(_:)), keyEquivalent: "")
+            item.target = self
+            item.representedObject = choice.rawValue
+            item.toolTip = choice.warning
+            shortcutMenu.addItem(item)
+        }
+        shortcutItem.submenu = shortcutMenu
+        menu.addItem(shortcutItem)
         menu.addItem(.separator())
 
         loginItem = NSMenuItem(title: "Open at Login", action: #selector(toggleOpenAtLogin), keyEquivalent: "")
@@ -153,6 +168,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             ? "On — \(screens) screen\(screens == 1 ? "" : "s") dimmed"
             : "Off").attributedTitle
         toggleItem.title = overlay.isActive ? "Switch Ruler Off" : "Switch Ruler On"
+        hintItem.attributedTitle = caption("\(Settings.slitShortcut.hint)   change the slit height").attributedTitle
+        for item in shortcutMenu.items {
+            item.state = (item.representedObject as? String) == Settings.slitShortcut.rawValue ? .on : .off
+        }
         loginItem.state = isOpenAtLogin ? .on : .off
 
         overlay.setMenuOpen(true)
@@ -171,7 +190,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private func setRulerOn(_ on: Bool) {
         overlay.setActive(on)
         Settings.enabled = on
-        setArrowKeysActive(on)
+        setHeightKeysActive(on)
         updateStatusIcon()
     }
 
@@ -188,22 +207,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
     }
 
-    /// The arrow shortcuts exist only while the ruler is on, thus the key
-    /// combination stays free for other apps while the ruler is off.
-    private func setArrowKeysActive(_ active: Bool) {
+    /// The height shortcuts exist only while the ruler is on, thus the key
+    /// combinations stay free for other apps while the ruler is off.
+    private func setHeightKeysActive(_ active: Bool) {
         stopRepeat()
-        guard active else {
-            arrowKeys.removeAll()
-            return
+        heightKeys.removeAll()          // this also unregisters the old keys
+        guard active else { return }
+
+        let choice = Settings.slitShortcut
+        let keys = choice.bigger.map { ($0, Self.slitStep) } + choice.smaller.map { ($0, -Self.slitStep) }
+        for (key, step) in keys {
+            let hotKey = GlobalHotKey(keyCode: key.code,
+                                      modifiers: key.carbonModifiers,
+                                      onPress: { [weak self] in self?.beginAdjust(step: step) },
+                                      onRelease: { [weak self] in self?.stopRepeat() })
+            if let hotKey { heightKeys.append(hotKey) }
         }
-        guard arrowKeys.isEmpty else { return }
-        for (keyCode, step) in [(kVK_UpArrow, Self.slitStep), (kVK_DownArrow, -Self.slitStep)] {
-            let key = GlobalHotKey(keyCode: UInt32(keyCode),
-                                   modifiers: Self.carbonModifiers,
-                                   onPress: { [weak self] in self?.beginAdjust(step: step) },
-                                   onRelease: { [weak self] in self?.stopRepeat() })
-            if let key { arrowKeys.append(key) }
-        }
+    }
+
+    @objc private func selectShortcut(_ sender: NSMenuItem) {
+        guard let raw = sender.representedObject as? String,
+              let choice = SlitShortcut(rawValue: raw) else { return }
+        Settings.slitShortcut = choice
+        setHeightKeysActive(overlay.isActive)
     }
 
     /// One step at once, then a repeat while the key stays down.
@@ -216,7 +242,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             self.repeatTimer = Timer.scheduledTimer(withTimeInterval: Self.repeatInterval, repeats: true) { [weak self] _ in
                 guard let self else { return }
                 // Safety: stop also if the release of the key was not seen.
-                guard NSEvent.modifierFlags.intersection(.deviceIndependentFlagsMask) == Self.shortcutModifiers else {
+                guard NSEvent.modifierFlags.isSuperset(of: Self.shortcutModifiers) else {
                     self.stopRepeat()
                     return
                 }

@@ -7,6 +7,7 @@ enum Settings {
         static let slitHeight = "slitHeight"
         static let dimOpacity = "dimOpacity"
         static let feather = "feather"
+        static let slitShortcut = "slitShortcut"
     }
 
     /// Limits used by the sliders and by the clamping below.
@@ -20,6 +21,7 @@ enum Settings {
             Key.slitHeight: 64.0,
             Key.dimOpacity: 0.6,
             Key.feather: 16.0,
+            Key.slitShortcut: SlitShortcut.plusMinus.rawValue,
         ])
     }
 
@@ -41,6 +43,15 @@ enum Settings {
     static var feather: Double {
         get { clamp(UserDefaults.standard.double(forKey: Key.feather), to: featherRange) }
         set { UserDefaults.standard.set(clamp(newValue, to: featherRange), forKey: Key.feather) }
+    }
+
+    /// The key pair that changes the slit height.
+    static var slitShortcut: SlitShortcut {
+        get {
+            let raw = UserDefaults.standard.string(forKey: Key.slitShortcut) ?? ""
+            return SlitShortcut(rawValue: raw) ?? .plusMinus
+        }
+        set { UserDefaults.standard.set(newValue.rawValue, forKey: Key.slitShortcut) }
     }
 
     private static func clamp(_ value: Double, to range: ClosedRange<Double>) -> Double {
