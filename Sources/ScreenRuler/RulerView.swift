@@ -8,6 +8,8 @@ import AppKit
 final class RulerView: NSView {
     private let topDim = CAGradientLayer()
     private let bottomDim = CAGradientLayer()
+    /// The colour wash over the slit, like the tint of a reading ruler.
+    private let tint = CAGradientLayer()
 
     /// Vertical centre of the slit, in the coordinates of this view.
     /// A nil value dims the full screen (the pointer is on a different screen).
@@ -30,7 +32,7 @@ final class RulerView: NSView {
         super.init(frame: frameRect)
         wantsLayer = true
         layer?.backgroundColor = .clear
-        for dim in [topDim, bottomDim] {
+        for dim in [topDim, bottomDim, tint] {
             dim.autoresizingMask = []
             dim.actions = ["position": NSNull(), "bounds": NSNull(), "frame": NSNull()]
             layer?.addSublayer(dim)
@@ -41,6 +43,9 @@ final class RulerView: NSView {
         topDim.endPoint = CGPoint(x: 0.5, y: 0)
         bottomDim.startPoint = CGPoint(x: 0.5, y: 0)
         bottomDim.endPoint = CGPoint(x: 0.5, y: 1)
+        // The tint is soft at both ends, like the two dark layers.
+        tint.startPoint = CGPoint(x: 0.5, y: 0)
+        tint.endPoint = CGPoint(x: 0.5, y: 1)
     }
 
     required init?(coder: NSCoder) { fatalError("not used") }
@@ -69,6 +74,7 @@ final class RulerView: NSView {
                 topDim.colors = [solid, solid]
                 topDim.locations = [0, 1]
                 bottomDim.isHidden = true
+                tint.isHidden = true
                 topDim.isHidden = false
             }
             return
@@ -90,7 +96,26 @@ final class RulerView: NSView {
                 dim.colors = [solid, solid, clear]
                 dim.locations = [0, NSNumber(value: 1 - fade), 1]
             }
+            layoutTint(slitBottom: slitBottom, slitTop: slitTop, width: width, feather: feather)
         }
+    }
+
+    /// The colour over the slit. It is soft at both ends, so that it starts
+    /// and stops together with the dark layers.
+    private func layoutTint(slitBottom: CGFloat, slitTop: CGFloat, width: CGFloat, feather: CGFloat) {
+        guard let color = Settings.tintColor, slitTop > slitBottom else {
+            tint.isHidden = true
+            return
+        }
+        let frame = CGRect(x: 0, y: slitBottom, width: width, height: slitTop - slitBottom)
+        let solid = color.withAlphaComponent(CGFloat(Settings.tintStrength)).cgColor
+        let clear = color.withAlphaComponent(0).cgColor
+        let fade = min(feather / frame.height, 0.45)
+
+        tint.isHidden = false
+        tint.frame = frame
+        tint.colors = [clear, solid, solid, clear]
+        tint.locations = [0, NSNumber(value: fade), NSNumber(value: 1 - fade), 1]
     }
 
     private func withoutAnimation(_ body: () -> Void) {

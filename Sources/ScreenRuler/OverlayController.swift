@@ -42,10 +42,11 @@ final class OverlayController {
         for window in windows { window.rulerView.layoutDimLayers() }
     }
 
-    /// The overlay goes below the menus while the menu of the app is open,
-    /// so that the user can read the menu without the dim on top of it.
-    func setMenuOpen(_ open: Bool) {
-        let level = open ? OverlayWindow.loweredLevel : OverlayWindow.topLevel
+    /// The overlay goes below the menus and the panels while the menu or the
+    /// colour panel is open, so that the user can see them without the dim on
+    /// top of them.
+    func setLowered(_ lowered: Bool) {
+        let level = lowered ? OverlayWindow.loweredLevel : OverlayWindow.topLevel
         for window in windows { window.level = level }
     }
 

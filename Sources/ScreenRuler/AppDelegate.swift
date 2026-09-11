@@ -14,6 +14,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var heightKeys: [GlobalHotKey] = []
     private var hintItem: NSMenuItem!
     private var shortcutMenu: NSMenu!
+    private var tintItem: NSMenuItem!
+    private var tintMenu: NSMenu!
+    private var watchesColourPanel = false
     private var repeatTimer: Timer?
 
     /// The modifiers of all shortcuts: ⌃⌥⌘.
@@ -27,7 +30,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     /// Time between two steps while the arrow key stays down.
     private static let repeatInterval = 1.0 / 30.0
 
-    private enum Slider { case slitHeight, dimOpacity, feather }
+    private enum Slider { case slitHeight, dimOpacity, feather, tintStrength }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         Settings.registerDefaults()
@@ -96,6 +99,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                                       value: Settings.feather,
                                       format: Self.pixels,
                                       onChange: { Settings.feather = $0 })
+
+        menu.addItem(.separator())
+
+        tintItem = NSMenuItem(title: "Slit Colour", action: nil, keyEquivalent: "")
+        tintMenu = NSMenu()
+        tintMenu.addItem(tintChoice(name: "No Colour", hex: ""))
+        for preset in SlitTint.presets {
+            tintMenu.addItem(tintChoice(name: preset.name, hex: preset.hex))
+        }
+        tintMenu.addItem(.separator())
+        let custom = NSMenuItem(title: "Custom Colour…", action: #selector(chooseCustomTint), keyEquivalent: "")
+        custom.target = self
+        tintMenu.addItem(custom)
+        tintItem.submenu = tintMenu
+        menu.addItem(tintItem)
+
+        sliders[.tintStrength] = addSlider(title: "Colour strength",
+                                           range: Settings.tintStrengthRange,
+                                           value: Settings.tintStrength,
+                                           format: Self.percent,
+                                           onChange: { Settings.tintStrength = $0 })
 
         menu.addItem(.separator())
         menu.addItem(caption("⌃⌥⌘R   switch the ruler on or off"))
@@ -167,6 +191,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         sliders[.slitHeight]?.value = Settings.slitHeight
         sliders[.dimOpacity]?.value = Settings.dimOpacity
         sliders[.feather]?.value = Settings.feather
+        sliders[.tintStrength]?.value = Settings.tintStrength
+        updateTintMenu()
 
         let screens = NSScreen.screens.count
         statusLine.attributedTitle = caption(overlay.isActive
@@ -187,11 +213,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         loginItem.state = isOpenAtLogin ? .on : .off
 
-        overlay.setMenuOpen(true)
+        overlay.setLowered(true)
     }
 
     func menuDidClose(_ menu: NSMenu) {
-        overlay.setMenuOpen(false)
+        overlay.setLowered(false)
     }
 
     // MARK: - Actions
@@ -235,6 +261,92 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                                       onPress: { [weak self] in self?.beginAdjust(step: step) },
                                       onRelease: { [weak self] in self?.stopRepeat() })
             if let hotKey { heightKeys.append(hotKey) }
+        }
+    }
+
+    /// One colour row of the submenu: a swatch, a name and a tick.
+    private func tintChoice(name: String, hex: String) -> NSMenuItem {
+        let item = NSMenuItem(title: name, action: #selector(selectTint(_:)), keyEquivalent: "")
+        item.target = self
+        item.representedObject = hex
+        item.image = Self.swatch(for: hex.isEmpty ? nil : SlitTint.color(fromHex: hex))
+        return item
+    }
+
+    private func updateTintMenu() {
+        let current = Settings.tintHex
+        tintItem.image = Self.swatch(for: Settings.tintColor)
+        for item in tintMenu.items {
+            guard let hex = item.representedObject as? String else { continue }
+            item.state = hex.caseInsensitiveCompare(current) == .orderedSame ? .on : .off
+        }
+        // The last row holds the colour of the user, if it is not a preset.
+        if let custom = tintMenu.items.last {
+            let isCustom = !current.isEmpty && SlitTint.presetName(forHex: current) == nil
+            custom.state = isCustom ? .on : .off
+            custom.image = isCustom ? Self.swatch(for: Settings.tintColor) : nil
+        }
+    }
+
+    @objc private func selectTint(_ sender: NSMenuItem) {
+        guard let hex = sender.representedObject as? String else { return }
+        Settings.tintHex = hex
+        overlay.refresh()
+        updateTintMenu()
+    }
+
+    @objc private func chooseCustomTint() {
+        let panel = NSColorPanel.shared
+        panel.setTarget(self)
+        panel.setAction(#selector(customTintChanged(_:)))
+        panel.color = Settings.tintColor ?? SlitTint.presets[0].color
+        panel.isContinuous = true        // the slit follows the panel at once
+        panel.showsAlpha = false
+
+        // The overlay must stay below the panel, or the dim covers the colours.
+        overlay.setLowered(true)
+        if !watchesColourPanel {
+            watchesColourPanel = true
+            NotificationCenter.default.addObserver(self,
+                                                  selector: #selector(colourPanelClosed),
+                                                  name: NSWindow.willCloseNotification,
+                                                  object: panel)
+        }
+
+        NSApp.activate(ignoringOtherApps: true)
+        panel.makeKeyAndOrderFront(nil)
+    }
+
+    @objc private func colourPanelClosed() {
+        overlay.setLowered(false)
+    }
+
+    @objc private func customTintChanged(_ sender: NSColorPanel) {
+        Settings.tintColor = sender.color
+        overlay.refresh()
+        updateTintMenu()
+    }
+
+    /// A small round square of the colour for a menu row. Nil is "no colour".
+    private static func swatch(for color: NSColor?) -> NSImage {
+        let size = NSSize(width: 14, height: 14)
+        return NSImage(size: size, flipped: false) { rect in
+            let path = NSBezierPath(roundedRect: rect.insetBy(dx: 0.5, dy: 0.5), xRadius: 3.5, yRadius: 3.5)
+            (color ?? NSColor.textBackgroundColor).setFill()
+            path.fill()
+            if color == nil {
+                // A line across the empty swatch.
+                NSColor.tertiaryLabelColor.setStroke()
+                let slash = NSBezierPath()
+                slash.move(to: NSPoint(x: rect.minX + 3, y: rect.minY + 3))
+                slash.line(to: NSPoint(x: rect.maxX - 3, y: rect.maxY - 3))
+                slash.lineWidth = 1.5
+                slash.stroke()
+            }
+            NSColor.separatorColor.setStroke()
+            path.lineWidth = 1
+            path.stroke()
+            return true
         }
     }
 

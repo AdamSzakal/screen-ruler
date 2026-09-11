@@ -62,8 +62,26 @@ a restart.
 | Slit height | 12 to 300 px |
 | Dim amount | 10 to 95 % |
 | Edge softness | 0 to 80 px, the soft edge above and below the slit |
+| Slit colour | No colour, one of eight presets, or your own colour |
+| Colour strength | 4 to 45 % |
 
 <br clear="right">
+
+### Colours
+
+A reading ruler on paper is a transparent coloured strip. Many readers find
+one colour more comfortable than the others, therefore the **Slit Colour**
+submenu holds the usual overlay colours:
+
+Butter · Peach · Rose · Lilac · Sky · Aqua · Mint · Grey
+
+**Custom Colour…** opens the colour picker of macOS. The slit follows the
+picker while you move in it, thus you see the result immediately. The overlay
+goes below the picker while it is open, so that the colours in the picker keep
+their true look.
+
+The colour lies over the slit only, and it fades out at the two ends together
+with the dark part. **No Colour** gives a clear slit again.
 
 ### Height shortcut
 
