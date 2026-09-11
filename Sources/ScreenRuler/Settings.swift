@@ -9,14 +9,12 @@ enum Settings {
         static let feather = "feather"
         static let slitShortcut = "slitShortcut"
         static let tintHex = "tintHex"
-        static let tintStrength = "tintStrength"
     }
 
     /// Limits used by the sliders and by the clamping below.
     static let slitHeightRange: ClosedRange<Double> = 12...300
     static let dimOpacityRange: ClosedRange<Double> = 0.1...0.95
     static let featherRange: ClosedRange<Double> = 0...80
-    static let tintStrengthRange: ClosedRange<Double> = 0.04...0.45
 
     static func registerDefaults() {
         UserDefaults.standard.register(defaults: [
@@ -25,8 +23,7 @@ enum Settings {
             Key.dimOpacity: 0.6,
             Key.feather: 16.0,
             Key.slitShortcut: SlitShortcut.commaPeriod.rawValue,
-            Key.tintHex: "",                 // empty: no colour over the slit
-            Key.tintStrength: 0.18,
+            Key.tintHex: "",                 // empty: plain black
         ])
     }
 
@@ -68,15 +65,9 @@ enum Settings {
         set { UserDefaults.standard.set(newValue, forKey: Key.tintHex) }
     }
 
-    /// How much of the colour is mixed into the black.
-    static var tintStrength: Double {
-        get { clamp(UserDefaults.standard.double(forKey: Key.tintStrength), to: tintStrengthRange) }
-        set { UserDefaults.standard.set(clamp(newValue, to: tintStrengthRange), forKey: Key.tintStrength) }
-    }
-
     /// The colour of the dark part, ready to draw.
     static var dimColor: NSColor {
-        OverlayTint.dimColor(tint: tintColor, strength: tintStrength, opacity: dimOpacity)
+        OverlayTint.dimColor(tint: tintColor, opacity: dimOpacity)
     }
 
     /// The key pair that changes the slit height.

@@ -30,7 +30,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     /// Time between two steps while the arrow key stays down.
     private static let repeatInterval = 1.0 / 30.0
 
-    private enum Slider { case slitHeight, dimOpacity, feather, tintStrength }
+    private enum Slider { case slitHeight, dimOpacity, feather }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         Settings.registerDefaults()
@@ -115,12 +115,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         tintItem.submenu = tintMenu
         menu.addItem(tintItem)
 
-        sliders[.tintStrength] = addSlider(title: "Colour amount",
-                                           range: Settings.tintStrengthRange,
-                                           value: Settings.tintStrength,
-                                           format: Self.percent,
-                                           onChange: { Settings.tintStrength = $0 })
-
         menu.addItem(.separator())
         menu.addItem(caption("⌃⌥⌘R   switch the ruler on or off"))
         hintItem = caption("")
@@ -191,7 +185,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         sliders[.slitHeight]?.value = Settings.slitHeight
         sliders[.dimOpacity]?.value = Settings.dimOpacity
         sliders[.feather]?.value = Settings.feather
-        sliders[.tintStrength]?.value = Settings.tintStrength
         updateTintMenu()
 
         let screens = NSScreen.screens.count
@@ -276,9 +269,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     /// How the dark part looks with this tint, without the alpha.
     private static func swatchColor(forHex hex: String) -> NSColor {
-        OverlayTint.dimColor(tint: hex.isEmpty ? nil : OverlayTint.color(fromHex: hex),
-                             strength: Settings.tintStrength,
-                             opacity: 1)
+        OverlayTint.dimColor(tint: hex.isEmpty ? nil : OverlayTint.color(fromHex: hex), opacity: 1)
     }
 
     private func updateTintMenu() {

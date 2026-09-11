@@ -24,11 +24,15 @@ struct OverlayTint {
 
     var color: NSColor { OverlayTint.color(fromHex: hex) ?? .black }
 
+    /// How much of the colour goes into the black. One quarter gives a clear
+    /// cast and keeps the dark part dark, for a light colour and a dark one.
+    static let blendAmount: CGFloat = 0.25
+
     /// The colour of the dark part: black with a part of the tint in it, and
     /// the alpha of the dim setting.
-    static func dimColor(tint: NSColor?, strength: Double, opacity: Double) -> NSColor {
+    static func dimColor(tint: NSColor?, opacity: Double) -> NSColor {
         let black = NSColor(srgbRed: 0, green: 0, blue: 0, alpha: 1)
-        guard let tint, let mixed = black.blended(withFraction: CGFloat(strength), of: tint) else {
+        guard let tint, let mixed = black.blended(withFraction: blendAmount, of: tint) else {
             return black.withAlphaComponent(CGFloat(opacity))
         }
         return mixed.withAlphaComponent(CGFloat(opacity))

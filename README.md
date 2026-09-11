@@ -63,7 +63,6 @@ a restart.
 | Dim amount | 10 to 95 % |
 | Edge softness | 0 to 80 px, the soft edge above and below the slit |
 | Dim colour | Black, one of eight colours, or your own colour |
-| Colour amount | 4 to 45 %, how much colour goes into the black |
 
 <br clear="right">
 
@@ -80,9 +79,10 @@ goes below the picker while it is open, so that the colours in the picker keep
 their true look.
 
 The colour is **mixed into the black**, it does not replace it — a light colour
-on its own would make the screen brighter, not darker. **Colour amount** sets
-how much of it goes in: Sepia at 25 % gives a dark warm brown, not a beige
-wash. The slit itself stays fully clear at all times.
+on its own would make the screen brighter, not darker. One quarter of the
+colour goes in, which keeps every choice dark: Sepia gives a dark warm brown,
+not a beige wash. Your own colour from the picker gets the same treatment.
+The slit itself stays fully clear at all times.
 
 ### Height shortcut
 
