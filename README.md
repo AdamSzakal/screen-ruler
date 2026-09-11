@@ -10,7 +10,7 @@ like a reading ruler on a page.
 - **Click** the menu bar icon: open the menu with the status, the settings and
   the shortcuts.
 - **⌃⌥⌘R**: switch the ruler on or off from any app.
-- **⌃⌥⌘+ / ⌃⌥⌘−**: make the slit higher or lower from any app. Hold the key
+- **⌃⌥⌘. / ⌃⌥⌘,**: make the slit higher or lower from any app. Hold the key
   down to continue. The slit moves to the new height with a short animation.
 
 Settings:
@@ -28,7 +28,8 @@ The menu has a **Height Shortcut** submenu with four key pairs:
 
 | Pair | Note |
 | --- | --- |
-| `⌃⌥⌘ −` and `⌃⌥⌘ +` | Default. `⌃⌥⌘ =` works too, with or without ⇧. |
+| `⌃⌥⌘ ,` and `⌃⌥⌘ .` | Default. |
+| `⌃⌥⌘ −` and `⌃⌥⌘ +` | `⌃⌥⌘ =` works too, with or without ⇧. |
 | `⌃⌥⌘ [` and `⌃⌥⌘ ]` | Grey on a layout that needs ⌥ for a bracket, e.g. Swedish. |
 | `⌃⌥⌘ J` and `⌃⌥⌘ K` | |
 | `⌃⌥⌘ ↓` and `⌃⌥⌘ ↑` | Rectangle and other window tools often use this pair. |

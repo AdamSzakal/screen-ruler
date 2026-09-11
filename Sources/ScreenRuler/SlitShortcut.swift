@@ -8,6 +8,7 @@ import Carbon.HIToolbox
 /// A pair is written as characters, not as key codes, thus the app finds the
 /// correct keys on every keyboard layout.
 enum SlitShortcut: String, CaseIterable {
+    case commaPeriod
     case plusMinus
     case brackets
     case letters
@@ -19,6 +20,7 @@ enum SlitShortcut: String, CaseIterable {
     /// Name in the menu.
     var title: String {
         switch self {
+        case .commaPeriod: return "⌃⌥⌘ ,  and  ⌃⌥⌘ ."
         case .plusMinus: return "⌃⌥⌘ −  and  ⌃⌥⌘ +"
         case .brackets:  return "⌃⌥⌘ [  and  ⌃⌥⌘ ]"
         case .letters:   return "⌃⌥⌘ J  and  ⌃⌥⌘ K"
@@ -29,6 +31,7 @@ enum SlitShortcut: String, CaseIterable {
     /// Short form for the hint line.
     var hint: String {
         switch self {
+        case .commaPeriod: return "⌃⌥⌘,  ⌃⌥⌘."
         case .plusMinus: return "⌃⌥⌘−  ⌃⌥⌘+"
         case .brackets:  return "⌃⌥⌘[  ⌃⌥⌘]"
         case .letters:   return "⌃⌥⌘J  ⌃⌥⌘K"
@@ -57,6 +60,7 @@ enum SlitShortcut: String, CaseIterable {
     /// after it is an alternative that is welcome but not necessary.
     private var smallerCharacters: [String] {
         switch self {
+        case .commaPeriod: return [","]
         case .plusMinus: return ["-"]
         case .brackets:  return ["["]
         case .letters:   return ["j"]
@@ -66,6 +70,7 @@ enum SlitShortcut: String, CaseIterable {
 
     private var biggerCharacters: [String] {
         switch self {
+        case .commaPeriod: return ["."]
         case .plusMinus: return ["+", "="]   // "=" sits next to "+" on many layouts
         case .brackets:  return ["]"]
         case .letters:   return ["k"]

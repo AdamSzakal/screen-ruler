@@ -21,7 +21,7 @@ enum Settings {
             Key.slitHeight: 64.0,
             Key.dimOpacity: 0.6,
             Key.feather: 16.0,
-            Key.slitShortcut: SlitShortcut.plusMinus.rawValue,
+            Key.slitShortcut: SlitShortcut.commaPeriod.rawValue,
         ])
     }
 
@@ -49,7 +49,7 @@ enum Settings {
     static var slitShortcut: SlitShortcut {
         get {
             let raw = UserDefaults.standard.string(forKey: Key.slitShortcut) ?? ""
-            return SlitShortcut(rawValue: raw) ?? .plusMinus
+            return SlitShortcut(rawValue: raw) ?? .commaPeriod
         }
         set { UserDefaults.standard.set(newValue.rawValue, forKey: Key.slitShortcut) }
     }
