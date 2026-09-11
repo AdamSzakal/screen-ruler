@@ -5,7 +5,6 @@ final class SliderMenuItemView: NSView {
     private let titleLabel = NSTextField(labelWithString: "")
     private let valueLabel = NSTextField(labelWithString: "")
     private let slider = NSSlider()
-    private let title: String
     private let format: (Double) -> String
     private let onChange: (Double) -> Void
 
@@ -14,7 +13,6 @@ final class SliderMenuItemView: NSView {
          value: Double,
          format: @escaping (Double) -> String,
          onChange: @escaping (Double) -> Void) {
-        self.title = title
         self.format = format
         self.onChange = onChange
         super.init(frame: NSRect(x: 0, y: 0, width: 240, height: 48))
@@ -41,6 +39,15 @@ final class SliderMenuItemView: NSView {
     }
 
     required init?(coder: NSCoder) { fatalError("not used") }
+
+    /// Shows a value that was changed somewhere else, e.g. by the scroll shortcut.
+    var value: Double {
+        get { slider.doubleValue }
+        set {
+            slider.doubleValue = newValue
+            valueLabel.stringValue = format(newValue)
+        }
+    }
 
     @objc private func sliderMoved() {
         valueLabel.stringValue = format(slider.doubleValue)

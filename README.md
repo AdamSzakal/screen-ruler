@@ -7,9 +7,10 @@ like a reading ruler on a page.
 
 ## Use
 
-- **Left click** the menu bar icon: switch the ruler on or off.
-- **Right click** the menu bar icon: open the settings.
+- **Click** the menu bar icon: open the menu with the status, the settings and
+  the shortcuts.
 - **⌃⌥⌘R**: switch the ruler on or off from any app.
+- **⌃⌥⌘ + scroll up or down**: make the slit higher or lower from any app.
 
 Settings:
 
@@ -19,6 +20,10 @@ Settings:
 | Dim amount | How dark the rest of the screen becomes, 10 to 95 %. |
 | Edge softness | The width of the soft edge above and below the slit. |
 | Open at Login | Starts the app when you log in. |
+
+The slit height also follows **⌃⌥⌘ + scroll**. The app reads these scroll
+events only, it does not hold them back, thus the window below the pointer
+scrolls at the same time.
 
 The settings stay after a restart of the app.
 
@@ -57,6 +62,7 @@ without a developer account.
 | `Sources/ScreenRuler/RulerView.swift` | The two dark layers and the slit. |
 | `Sources/ScreenRuler/SliderMenuItemView.swift` | A slider row in the menu. |
 | `Sources/ScreenRuler/GlobalHotKey.swift` | The ⌃⌥⌘R shortcut (Carbon API). |
+| `Sources/ScreenRuler/ScrollShortcut.swift` | The ⌃⌥⌘ + scroll shortcut. |
 | `Sources/ScreenRuler/Settings.swift` | Values kept in UserDefaults. |
 
 ## License
