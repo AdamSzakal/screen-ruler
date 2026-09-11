@@ -6,6 +6,12 @@ final class OverlayController {
     private var tracker: Timer?
     private var lastPointer: NSPoint = .zero
 
+    /// The slit height that is drawn now. It follows the setting with a short
+    /// ease, thus a change of the height is a movement and not a jump.
+    private var easedSlitHeight = Settings.slitHeight
+    /// Part of the distance that is covered in one frame of 1/60 s.
+    private let easeFactor = 0.25
+
     private(set) var isActive = false
 
     init() {
@@ -22,6 +28,7 @@ final class OverlayController {
         guard active != isActive else { return }
         isActive = active
         if active {
+            easedSlitHeight = Settings.slitHeight   // start without a movement
             buildWindows()
             startTracking()
         } else {
@@ -83,15 +90,30 @@ final class OverlayController {
     }
 
     private func updateSlit(force: Bool) {
+        var changed = force
+
+        let target = Settings.slitHeight
+        if easedSlitHeight != target {
+            let remaining = target - easedSlitHeight
+            // Stop the ease when less than half a point is left, or the value
+            // would come near the target but never reach it.
+            easedSlitHeight = abs(remaining) < 0.5 ? target : easedSlitHeight + remaining * easeFactor
+            changed = true
+        }
+
         let pointer = NSEvent.mouseLocation
-        guard force || pointer.y != lastPointer.y || pointer.x != lastPointer.x else { return }
-        lastPointer = pointer
+        if pointer != lastPointer {
+            lastPointer = pointer
+            changed = true
+        }
+        guard changed else { return }
 
         for window in windows {
             let frame = window.frame
             // Only the screen under the pointer gets a slit; the others stay dim.
             let onThisScreen = NSMouseInRect(pointer, frame, false)
-            window.rulerView.slitCenterY = onThisScreen ? pointer.y - frame.minY : nil
+            window.rulerView.update(centerY: onThisScreen ? pointer.y - frame.minY : nil,
+                                    height: CGFloat(easedSlitHeight))
         }
     }
 }

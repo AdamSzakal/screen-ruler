@@ -10,11 +10,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var toggleItem: NSMenuItem!
     private var loginItem: NSMenuItem!
     private var sliders: [Slider: SliderMenuItemView] = [:]
-    private var hotKey: GlobalHotKey?
-    private var scrollShortcut: ScrollShortcut?
+    private var toggleKey: GlobalHotKey?
+    private var arrowKeys: [GlobalHotKey] = []
+    private var repeatTimer: Timer?
 
-    /// The modifiers of both shortcuts: ⌃⌥⌘.
+    /// The modifiers of all shortcuts: ⌃⌥⌘.
     private static let shortcutModifiers: NSEvent.ModifierFlags = [.control, .option, .command]
+    private static let carbonModifiers = UInt32(controlKey | optionKey | cmdKey)
+
+    /// Change of the slit height for one press of an arrow key.
+    private static let slitStep = 10.0
+    /// Wait before a held arrow key starts to repeat, like the system does.
+    private static let repeatDelay = 0.3
+    /// Time between two steps while the arrow key stays down.
+    private static let repeatInterval = 1.0 / 30.0
 
     private enum Slider { case slitHeight, dimOpacity, feather }
 
@@ -84,7 +93,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         menu.addItem(.separator())
         menu.addItem(caption("⌃⌥⌘R   switch the ruler on or off"))
-        menu.addItem(caption("⌃⌥⌘ + scroll   change the slit height"))
+        menu.addItem(caption("⌃⌥⌘↑ ⌃⌥⌘↓   change the slit height"))
         menu.addItem(.separator())
 
         loginItem = NSMenuItem(title: "Open at Login", action: #selector(toggleOpenAtLogin), keyEquivalent: "")
@@ -162,28 +171,69 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private func setRulerOn(_ on: Bool) {
         overlay.setActive(on)
         Settings.enabled = on
-        if on { scrollShortcut?.start() } else { scrollShortcut?.stop() }
+        setArrowKeysActive(on)
         updateStatusIcon()
     }
 
     // MARK: - Shortcuts
 
     private func registerShortcuts() {
-        hotKey = GlobalHotKey(keyCode: UInt32(kVK_ANSI_R),
-                              modifiers: UInt32(controlKey | optionKey | cmdKey)) { [weak self] in
+        toggleKey = GlobalHotKey(keyCode: UInt32(kVK_ANSI_R),
+                                 modifiers: Self.carbonModifiers) { [weak self] in
             self?.toggleRuler()
         }
-        if hotKey == nil {
+        if toggleKey == nil {
             // A different app holds the shortcut. The menu still works.
             toggleItem?.keyEquivalent = ""
         }
+    }
 
-        scrollShortcut = ScrollShortcut(modifiers: Self.shortcutModifiers) { [weak self] delta in
-            guard let self else { return }
-            Settings.slitHeight += delta
-            self.sliders[.slitHeight]?.value = Settings.slitHeight
-            self.overlay.refresh()
+    /// The arrow shortcuts exist only while the ruler is on, thus the key
+    /// combination stays free for other apps while the ruler is off.
+    private func setArrowKeysActive(_ active: Bool) {
+        stopRepeat()
+        guard active else {
+            arrowKeys.removeAll()
+            return
         }
+        guard arrowKeys.isEmpty else { return }
+        for (keyCode, step) in [(kVK_UpArrow, Self.slitStep), (kVK_DownArrow, -Self.slitStep)] {
+            let key = GlobalHotKey(keyCode: UInt32(keyCode),
+                                   modifiers: Self.carbonModifiers,
+                                   onPress: { [weak self] in self?.beginAdjust(step: step) },
+                                   onRelease: { [weak self] in self?.stopRepeat() })
+            if let key { arrowKeys.append(key) }
+        }
+    }
+
+    /// One step at once, then a repeat while the key stays down.
+    private func beginAdjust(step: Double) {
+        stopRepeat()
+        adjustSlit(by: step)
+
+        repeatTimer = Timer.scheduledTimer(withTimeInterval: Self.repeatDelay, repeats: false) { [weak self] _ in
+            guard let self else { return }
+            self.repeatTimer = Timer.scheduledTimer(withTimeInterval: Self.repeatInterval, repeats: true) { [weak self] _ in
+                guard let self else { return }
+                // Safety: stop also if the release of the key was not seen.
+                guard NSEvent.modifierFlags.intersection(.deviceIndependentFlagsMask) == Self.shortcutModifiers else {
+                    self.stopRepeat()
+                    return
+                }
+                self.adjustSlit(by: step)
+            }
+        }
+    }
+
+    private func stopRepeat() {
+        repeatTimer?.invalidate()
+        repeatTimer = nil
+    }
+
+    /// The overlay eases to the new height, thus the change is a movement.
+    private func adjustSlit(by step: Double) {
+        Settings.slitHeight += step
+        sliders[.slitHeight]?.value = Settings.slitHeight
     }
 
     // MARK: - Open at login

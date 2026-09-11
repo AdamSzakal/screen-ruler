@@ -11,8 +11,19 @@ final class RulerView: NSView {
 
     /// Vertical centre of the slit, in the coordinates of this view.
     /// A nil value dims the full screen (the pointer is on a different screen).
-    var slitCenterY: CGFloat? {
-        didSet { if slitCenterY != oldValue { layoutDimLayers() } }
+    private(set) var slitCenterY: CGFloat?
+
+    /// Height of the slit. The controller eases this value to the setting,
+    /// so that a change of the height is a smooth movement.
+    private(set) var slitHeight: CGFloat = CGFloat(Settings.slitHeight)
+
+    /// Moves and resizes the slit. Both values change together, thus the
+    /// layers are laid out one time only.
+    func update(centerY: CGFloat?, height: CGFloat) {
+        guard centerY != slitCenterY || height != slitHeight else { return }
+        slitCenterY = centerY
+        slitHeight = height
+        layoutDimLayers()
     }
 
     override init(frame frameRect: NSRect) {
@@ -47,7 +58,6 @@ final class RulerView: NSView {
         let height = bounds.height
         guard width > 0, height > 0 else { return }
 
-        let slitHeight = CGFloat(Settings.slitHeight)
         let feather = CGFloat(Settings.feather)
         let solid = NSColor.black.withAlphaComponent(CGFloat(Settings.dimOpacity)).cgColor
         let clear = NSColor.black.withAlphaComponent(0).cgColor

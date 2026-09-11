@@ -3,8 +3,11 @@ import Carbon.HIToolbox
 
 /// A system wide keyboard shortcut, made with the Carbon hot key API.
 /// This API needs no accessibility permission, different from an event tap.
+/// It also holds the key combination back from the app below.
 final class GlobalHotKey {
-    private static var actions: [UInt32: () -> Void] = [:]
+    private typealias Actions = (press: () -> Void, release: (() -> Void)?)
+
+    private static var actions: [UInt32: Actions] = [:]
     private static var nextID: UInt32 = 1
     private static var handlerInstalled = false
 
@@ -12,7 +15,10 @@ final class GlobalHotKey {
     private let identifier: UInt32
 
     /// Returns nil if the shortcut is already in use by a different app.
-    init?(keyCode: UInt32, modifiers: UInt32, action: @escaping () -> Void) {
+    init?(keyCode: UInt32,
+          modifiers: UInt32,
+          onPress: @escaping () -> Void,
+          onRelease: (() -> Void)? = nil) {
         GlobalHotKey.installHandlerIfNeeded()
         identifier = GlobalHotKey.nextID
         GlobalHotKey.nextID += 1
@@ -22,7 +28,7 @@ final class GlobalHotKey {
         let status = RegisterEventHotKey(keyCode, modifiers, hotKeyID, GetApplicationEventTarget(), 0, &ref)
         guard status == noErr, let ref else { return nil }
         hotKeyRef = ref
-        GlobalHotKey.actions[identifier] = action
+        GlobalHotKey.actions[identifier] = (onPress, onRelease)
     }
 
     deinit {
@@ -34,8 +40,10 @@ final class GlobalHotKey {
         guard !handlerInstalled else { return }
         handlerInstalled = true
 
-        var spec = EventTypeSpec(eventClass: OSType(kEventClassKeyboard),
-                                 eventKind: UInt32(kEventHotKeyPressed))
+        var specs = [
+            EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed)),
+            EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyReleased)),
+        ]
         InstallEventHandler(GetApplicationEventTarget(), { _, event, _ -> OSStatus in
             guard let event else { return OSStatus(eventNotHandledErr) }
             var hotKeyID = EventHotKeyID()
@@ -46,9 +54,14 @@ final class GlobalHotKey {
                                            MemoryLayout<EventHotKeyID>.size,
                                            nil,
                                            &hotKeyID)
-            guard status == noErr else { return status }
-            GlobalHotKey.actions[hotKeyID.id]?()
+            guard status == noErr, let actions = GlobalHotKey.actions[hotKeyID.id] else { return status }
+
+            if GetEventKind(event) == UInt32(kEventHotKeyPressed) {
+                actions.press()
+            } else {
+                actions.release?()
+            }
             return noErr
-        }, 1, &spec, nil, nil)
+        }, specs.count, &specs, nil, nil)
     }
 }

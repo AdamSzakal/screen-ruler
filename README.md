@@ -10,7 +10,8 @@ like a reading ruler on a page.
 - **Click** the menu bar icon: open the menu with the status, the settings and
   the shortcuts.
 - **⌃⌥⌘R**: switch the ruler on or off from any app.
-- **⌃⌥⌘ + scroll up or down**: make the slit higher or lower from any app.
+- **⌃⌥⌘↑ / ⌃⌥⌘↓**: make the slit higher or lower from any app. Hold the key
+  down to continue. The slit moves to the new height with a short animation.
 
 Settings:
 
@@ -21,9 +22,8 @@ Settings:
 | Edge softness | The width of the soft edge above and below the slit. |
 | Open at Login | Starts the app when you log in. |
 
-The slit height also follows **⌃⌥⌘ + scroll**. The app reads these scroll
-events only, it does not hold them back, thus the window below the pointer
-scrolls at the same time.
+The arrow shortcuts work only while the ruler is on. While it is off, the app
+gives ⌃⌥⌘↑ and ⌃⌥⌘↓ back to the system.
 
 The settings stay after a restart of the app.
 
@@ -46,10 +46,13 @@ without a developer account.
 - Each window holds two dark gradient layers: one above the slit, one below it.
   A timer reads the pointer position 60 times a second and moves the two layers.
   Only the size of a layer changes, so the GPU does very little work.
+- The same timer eases the drawn slit height to the height of the setting.
+  Each frame covers a quarter of the distance that is left, thus a change of
+  the height is a short, smooth movement.
 - The windows let all clicks through (`ignoresMouseEvents`), thus the app below
   the ruler stays fully usable.
-- The app polls the pointer position instead of an event tap. Therefore it needs
-  **no accessibility permission**.
+- The app polls the pointer position instead of an event tap, and the shortcuts
+  use the Carbon hot key API. Therefore it needs **no accessibility permission**.
 - If a second screen has no pointer on it, that screen stays fully dark.
 
 ## Files
@@ -61,8 +64,7 @@ without a developer account.
 | `Sources/ScreenRuler/OverlayWindow.swift` | The click-through window. |
 | `Sources/ScreenRuler/RulerView.swift` | The two dark layers and the slit. |
 | `Sources/ScreenRuler/SliderMenuItemView.swift` | A slider row in the menu. |
-| `Sources/ScreenRuler/GlobalHotKey.swift` | The ⌃⌥⌘R shortcut (Carbon API). |
-| `Sources/ScreenRuler/ScrollShortcut.swift` | The ⌃⌥⌘ + scroll shortcut. |
+| `Sources/ScreenRuler/GlobalHotKey.swift` | The shortcuts (Carbon API). |
 | `Sources/ScreenRuler/Settings.swift` | Values kept in UserDefaults. |
 
 ## License
