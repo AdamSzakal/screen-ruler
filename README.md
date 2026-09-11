@@ -12,9 +12,9 @@ It makes the screen dark and keeps one bright slit at the height of the pointer.
 ![Menu bar app](https://img.shields.io/badge/menu%20bar-only-FFC36B?style=flat-square)
 ![MIT](https://img.shields.io/badge/license-MIT-111?style=flat-square)
 
-<img src="docs/hero.png" width="860" alt="A dark screen with one bright horizontal slit across a page of text, and the menu of the app">
+<img src="docs/demo.gif" width="820" alt="A web page with the screen dark and one bright slit that follows the pointer down the page">
 
-<sub>Drawing of the effect, not a screen capture.</sub>
+<sub><a href="docs/demo.mp4">Longer clip with the settings (MP4)</a></sub>
 
 </div>
 
@@ -53,11 +53,15 @@ Then open the menu of the app and switch **Open at Login** on.
 The slit moves to a new height with a short animation. All settings stay after
 a restart.
 
+<img src="docs/menu.png" width="380" align="right" alt="The menu of the app with the three sliders">
+
 | Setting | Range |
 | --- | --- |
 | Slit height | 12 to 300 px |
 | Dim amount | 10 to 95 % |
 | Edge softness | 0 to 80 px, the soft edge above and below the slit |
+
+<br clear="right">
 
 ### Height shortcut
 
@@ -119,7 +123,7 @@ permission**:
 | `Sources/ScreenRuler/SlitShortcut.swift` | The four key pairs for the height. |
 | `Sources/ScreenRuler/KeyboardLayout.swift` | Character to key, for your layout. |
 | `Sources/ScreenRuler/Settings.swift` | Values in UserDefaults. |
-| `Tools/MakeArtwork.swift` | Makes `docs/icon.png` and `docs/hero.png`. |
+| `Tools/MakeArtwork.swift` | Draws `docs/icon.png`, the icon of the app. |
 
 ## License
 
