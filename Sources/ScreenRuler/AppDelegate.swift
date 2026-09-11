@@ -34,6 +34,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         buildMenu()
         buildStatusItem()
         registerShortcuts()
+        DistributedNotificationCenter.default.addObserver(self,
+                                                         selector: #selector(keyboardLayoutChanged),
+                                                         name: KeyboardLayout.didChangeNotification,
+                                                         object: nil)
         setRulerOn(Settings.enabled)
     }
 
@@ -100,6 +104,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         let shortcutItem = NSMenuItem(title: "Height Shortcut", action: nil, keyEquivalent: "")
         shortcutMenu = NSMenu()
+        shortcutMenu.autoenablesItems = false
         for choice in SlitShortcut.allCases {
             let item = NSMenuItem(title: choice.title, action: #selector(selectShortcut(_:)), keyEquivalent: "")
             item.target = self
@@ -168,9 +173,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             ? "On — \(screens) screen\(screens == 1 ? "" : "s") dimmed"
             : "Off").attributedTitle
         toggleItem.title = overlay.isActive ? "Switch Ruler Off" : "Switch Ruler On"
-        hintItem.attributedTitle = caption("\(Settings.slitShortcut.hint)   change the slit height").attributedTitle
+        let choice = Settings.slitShortcut
+        let hint = choice.keys == nil
+            ? "\(choice.hint)   not on this keyboard layout"
+            : "\(choice.hint)   change the slit height"
+        hintItem.attributedTitle = caption(hint).attributedTitle
+
         for item in shortcutMenu.items {
-            item.state = (item.representedObject as? String) == Settings.slitShortcut.rawValue ? .on : .off
+            guard let raw = item.representedObject as? String, let pair = SlitShortcut(rawValue: raw) else { continue }
+            item.state = pair == choice ? .on : .off
+            item.isEnabled = pair.keys != nil
+            item.toolTip = pair.keys == nil ? "This keyboard layout cannot make these characters." : pair.warning
         }
         loginItem.state = isOpenAtLogin ? .on : .off
 
@@ -214,8 +227,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         heightKeys.removeAll()          // this also unregisters the old keys
         guard active else { return }
 
-        let choice = Settings.slitShortcut
-        let keys = choice.bigger.map { ($0, Self.slitStep) } + choice.smaller.map { ($0, -Self.slitStep) }
+        guard let pair = Settings.slitShortcut.keys else { return }
+        let keys = pair.bigger.map { ($0, Self.slitStep) } + pair.smaller.map { ($0, -Self.slitStep) }
         for (key, step) in keys {
             let hotKey = GlobalHotKey(keyCode: key.code,
                                       modifiers: key.carbonModifiers,
@@ -223,6 +236,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                                       onRelease: { [weak self] in self?.stopRepeat() })
             if let hotKey { heightKeys.append(hotKey) }
         }
+    }
+
+    @objc private func keyboardLayoutChanged() {
+        setHeightKeysActive(overlay.isActive)
     }
 
     @objc private func selectShortcut(_ sender: NSMenuItem) {

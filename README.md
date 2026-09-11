@@ -29,13 +29,19 @@ The menu has a **Height Shortcut** submenu with four key pairs:
 | Pair | Note |
 | --- | --- |
 | `⌃⌥⌘ −` and `⌃⌥⌘ +` | Default. `⌃⌥⌘ =` works too, with or without ⇧. |
-| `⌃⌥⌘ [` and `⌃⌥⌘ ]` | |
+| `⌃⌥⌘ [` and `⌃⌥⌘ ]` | Grey on a layout that needs ⌥ for a bracket, e.g. Swedish. |
 | `⌃⌥⌘ J` and `⌃⌥⌘ K` | |
 | `⌃⌥⌘ ↓` and `⌃⌥⌘ ↑` | Rectangle and other window tools often use this pair. |
 
 Select a different pair if an other app already holds one. The height keys are
 registered only while the ruler is on, thus they stay free for other apps while
 the ruler is off.
+
+A pair is written as **characters**, not as key positions. The app asks the
+keyboard layout which key makes the character, therefore ⌃⌥⌘+ is the "+" key
+on a Swedish keyboard and ⇧= on a US keyboard. If a character needs more than
+⇧ on your layout, that pair is grey in the menu. A change of the layout
+registers the keys again.
 
 The settings stay after a restart of the app.
 
@@ -78,6 +84,7 @@ without a developer account.
 | `Sources/ScreenRuler/SliderMenuItemView.swift` | A slider row in the menu. |
 | `Sources/ScreenRuler/GlobalHotKey.swift` | The shortcuts (Carbon API). |
 | `Sources/ScreenRuler/SlitShortcut.swift` | The four key pairs for the height. |
+| `Sources/ScreenRuler/KeyboardLayout.swift` | Character to key, for the layout of the user. |
 | `Sources/ScreenRuler/Settings.swift` | Values kept in UserDefaults. |
 
 ## License
