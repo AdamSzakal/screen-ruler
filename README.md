@@ -4,8 +4,10 @@
 
 # Screen Ruler
 
-**A reading ruler for your Mac.**
-It makes the screen dark and keeps one bright slit at the height of the pointer.
+**Dims everything but the line you are reading.**
+
+A bright slit follows your pointer down the page.
+Every click still goes through to the app below.
 
 ![macOS 13+](https://img.shields.io/badge/macOS-13%2B-111?style=flat-square)
 ![Swift 6](https://img.shields.io/badge/Swift-6-F05138?style=flat-square)
