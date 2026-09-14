@@ -9,6 +9,11 @@ final class RulerView: NSView {
     private let topDim = CAGradientLayer()
     private let bottomDim = CAGradientLayer()
 
+    /// Distance between the tip of the pointer and the edge of the dark part,
+    /// when one side only is dark. The edge stays near the pointer, therefore
+    /// the eye can follow a long line of text along it.
+    private static let pointerGap: CGFloat = 10
+
     /// Vertical centre of the slit, in the coordinates of this view.
     /// A nil value dims the full screen (the pointer is on a different screen).
     private(set) var slitCenterY: CGFloat?
@@ -59,6 +64,7 @@ final class RulerView: NSView {
         guard width > 0, height > 0 else { return }
 
         let feather = CGFloat(Settings.feather)
+        let sides = Settings.dimSides
         // Black, with the colour of the settings mixed into it.
         let dimColor = Settings.dimColor
         let solid = dimColor.cgColor
@@ -76,14 +82,20 @@ final class RulerView: NSView {
             return
         }
 
-        let slitBottom = centerY - slitHeight / 2
-        let slitTop = centerY + slitHeight / 2
+        // With two dark sides the slit is centred on the pointer, thus the slit
+        // height sets the two edges. With one dark side there is no slit, thus
+        // the edge sits a short, fixed distance from the tip of the pointer.
+        let half = slitHeight / 2
+        let slitBottom = centerY - (sides == .below ? Self.pointerGap : half)
+        let slitTop = centerY + (sides == .above ? Self.pointerGap : half)
         let topFrame = CGRect(x: 0, y: slitTop, width: width, height: max(0, height - slitTop))
         let bottomFrame = CGRect(x: 0, y: 0, width: width, height: max(0, slitBottom))
 
         withoutAnimation {
-            topDim.isHidden = topFrame.height <= 0
-            bottomDim.isHidden = bottomFrame.height <= 0
+            // A side that the user switched off keeps its layer hidden, thus
+            // the page stays fully visible on that side of the slit.
+            topDim.isHidden = topFrame.height <= 0 || sides == .below
+            bottomDim.isHidden = bottomFrame.height <= 0 || sides == .above
             topDim.frame = topFrame
             bottomDim.frame = bottomFrame
             for (dim, frame) in [(topDim, topFrame), (bottomDim, bottomFrame)] where !dim.isHidden {

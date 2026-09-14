@@ -62,9 +62,27 @@ a restart.
 | Slit height | 12 to 300 px |
 | Dim amount | 10 to 95 % |
 | Edge softness | 0 to 80 px, the soft edge above and below the slit |
+| Dim area | Above and below, above only, or below only |
 | Dim colour | Black, one of eight colours, or your own colour |
 
 <br clear="right">
+
+### Dim area
+
+A paper reading ruler covers one side of the line only: you put the card below
+the line and you read above it. The **Dim Area** submenu gives the same choice:
+
+- **Above and Below** — a slit. The page is dark on the two sides of the
+  pointer. This is the usual setting.
+- **Above Only** — the dark part is above the pointer, therefore the lines you
+  read already go away and the full page below the pointer stays clear.
+- **Below Only** — the dark part is below the pointer, like a card under the
+  line, therefore the next lines do not pull the eye.
+
+With one dark side there is no slit, thus the slit height does nothing. The
+edge stays **10 px from the tip of the pointer**, near enough to follow a long
+line of text along it. The dim amount, the soft edge and the colour work in all
+three settings. A screen with no pointer on it stays fully dark.
 
 ### Colours
 
@@ -110,8 +128,9 @@ permission**:
   full screen apps. The windows let all clicks through, thus the app below stays
   fully usable.
 - Each window holds two dark gradient layers: one above the slit, one below it.
-  A timer reads the pointer 60 times a second and changes the size of the two
-  layers. Nothing is drawn again, therefore the work for the GPU is very small.
+  The **Dim Area** setting hides one of the two layers. A timer reads the
+  pointer 60 times a second and changes the size of the two layers. Nothing is
+  drawn again, therefore the work for the GPU is very small.
 - The same timer eases the drawn slit height to the height of the setting. Each
   frame covers a quarter of the distance that is left, thus a change of the
   height is a short, smooth movement.

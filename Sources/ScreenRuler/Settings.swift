@@ -1,5 +1,20 @@
 import AppKit
 
+/// Which side of the slit gets the dark part. A paper reading ruler covers
+/// one side only, therefore the user can do the same here.
+enum DimSides: String, CaseIterable {
+    case both, above, below
+
+    /// The name of the choice in the menu.
+    var title: String {
+        switch self {
+        case .both: return "Above and Below"
+        case .above: return "Above Only"
+        case .below: return "Below Only"
+        }
+    }
+}
+
 /// User settings, kept in UserDefaults so they survive a restart.
 enum Settings {
     private enum Key {
@@ -8,6 +23,7 @@ enum Settings {
         static let dimOpacity = "dimOpacity"
         static let feather = "feather"
         static let tintHex = "tintHex"
+        static let dimSides = "dimSides"
     }
 
     /// Limits used by the sliders and by the clamping below.
@@ -22,6 +38,7 @@ enum Settings {
             Key.dimOpacity: 0.6,
             Key.feather: 16.0,
             Key.tintHex: "",                 // empty: plain black
+            Key.dimSides: DimSides.both.rawValue,
         ])
     }
 
@@ -43,6 +60,12 @@ enum Settings {
     static var feather: Double {
         get { clamp(UserDefaults.standard.double(forKey: Key.feather), to: featherRange) }
         set { UserDefaults.standard.set(clamp(newValue, to: featherRange), forKey: Key.feather) }
+    }
+
+    /// The side or sides of the slit that go dark.
+    static var dimSides: DimSides {
+        get { DimSides(rawValue: UserDefaults.standard.string(forKey: Key.dimSides) ?? "") ?? .both }
+        set { UserDefaults.standard.set(newValue.rawValue, forKey: Key.dimSides) }
     }
 
     /// The colour that is mixed into the dark part, or nil for plain black.

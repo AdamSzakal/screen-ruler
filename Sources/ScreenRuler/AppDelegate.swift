@@ -14,6 +14,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var heightKeys: [GlobalHotKey] = []
     private var tintItem: NSMenuItem!
     private var tintMenu: NSMenu!
+    private var sidesItem: NSMenuItem!
+    private var sidesMenu: NSMenu!
     private var watchesColourPanel = false
     private var repeatTimer: Timer?
 
@@ -105,6 +107,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         menu.addItem(.separator())
 
+        sidesItem = NSMenuItem(title: "Dim Area", action: nil, keyEquivalent: "")
+        sidesMenu = NSMenu()
+        for sides in DimSides.allCases {
+            let item = NSMenuItem(title: sides.title, action: #selector(selectDimSides(_:)), keyEquivalent: "")
+            item.target = self
+            item.representedObject = sides.rawValue
+            sidesMenu.addItem(item)
+        }
+        sidesItem.submenu = sidesMenu
+        menu.addItem(sidesItem)
+
         tintItem = NSMenuItem(title: "Dim Colour", action: nil, keyEquivalent: "")
         tintMenu = NSMenu()
         tintMenu.addItem(tintChoice(name: "Black", hex: ""))
@@ -175,6 +188,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         sliders[.dimOpacity]?.value = Settings.dimOpacity
         sliders[.feather]?.value = Settings.feather
         updateTintMenu()
+        updateSidesMenu()
 
         let screens = NSScreen.screens.count
         statusLine.attributedTitle = caption(overlay.isActive
@@ -263,6 +277,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             custom.state = isCustom ? .on : .off
             custom.image = isCustom ? Self.swatch(for: Self.swatchColor(forHex: current)) : nil
         }
+    }
+
+    /// Puts the tick on the side or sides that are dark now.
+    private func updateSidesMenu() {
+        let current = Settings.dimSides
+        for item in sidesMenu.items {
+            item.state = (item.representedObject as? String) == current.rawValue ? .on : .off
+        }
+    }
+
+    @objc private func selectDimSides(_ sender: NSMenuItem) {
+        guard let raw = sender.representedObject as? String,
+              let sides = DimSides(rawValue: raw) else { return }
+        Settings.dimSides = sides
+        overlay.refresh()
+        updateSidesMenu()
     }
 
     @objc private func selectTint(_ sender: NSMenuItem) {
